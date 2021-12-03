@@ -55,25 +55,27 @@ I put in some test values and when submitted, the page returns the same values. 
 
 <h3>XXE attacks</h3>
 
-I want to see if there's interesting in the POST request that can be abused. I fire up Burp Suite and intercept some test values:
+I want to see if there's anything interesting in the POST request that can be abused. I fire up Burp Suite and intercept some test values:
 
 ![image](https://user-images.githubusercontent.com/44827973/144486504-dc51dfbf-6b33-42f6-a770-8d1757ef15c0.png)
 
-The intercepted POST request has a single parameter, data. Instantly I recognise it as URL-encoded, due to the presence of %3D%3D which is URL-encoded "==" characters.
+The intercepted POST request has a single parameter, data. Immediately I recognise it as URL-encoded, due to the presence of %3D%3D which is URL-encoded "==" characters.
 
 ![image](https://user-images.githubusercontent.com/44827973/144486580-51b59c93-4f46-4d7b-9f46-79a23647b8f8.png)
 
 I send the data to Burp's Decoder. First I URL-decode it, and I receive what looks like a base64-encoded string. What gives it away is the "=" characters, which sometimes pads the end of base64-encoded strings.
-So then I base64-decode the URL-decoded data. You can see the results below.
+So then I base64-decode the URL-decoded data.
+
+You can see the results below:
 
 ![image](https://user-images.githubusercontent.com/44827973/144486896-cb908a70-54be-40c5-8a10-530d0282130c.png)
 
-It looks like the data being sent to the web server is XML-formatted. Because the web server is likely to process XML data, I may be able to conduct an XXE attack.
+It looks like the data being sent to the web server is XML-formatted. Because the web server is likely to process XML data, I may be able to conduct an XXE injection attack.
 
 An XML eXternal Entity (XXE) attack abuses the parsing of XML data by creation of a custom XML entity. These are called External entities because they are defined from outside of the Document Type Definition (DTD).
 We can define an entity to contain the contents of a file.
 
-I test this by following the XML example as per the [https://portswigger.net/web-security/xxe](XXE article on Portswigger).
+I test this by following the XML example as per the [XXE article on portswigger](https://portswigger.net/web-security/xxe).
 
 Here is my payload to attempt to read the contents of /etc/passwd:
 
