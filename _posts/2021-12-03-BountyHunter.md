@@ -95,9 +95,9 @@ I substitute this data back into the data parameter of the intercepted POST requ
 
 ![image](https://user-images.githubusercontent.com/44827973/144491846-5d8aa284-8e38-408b-aece-0e4dbafe0e6a.png)
 
-The XXE attack is successful, and I am able to read the contents of /etc/passwd. I find one user account, "development".
+The XXE attack is successful, and I'm able to read the contents of /etc/passwd. I find one user account, "development".
 
-With the information gathered so far, there aren't many other interesting files I can read at this point. Good options may be development's id_rsa for ssh, or /etc/shadow for passwords. I'm unable to read development's id_rsa file because the web server is likely running as www-data which won't have permission, and I'm unable to read /etc/shadow which by default has even stricter permissions.
+With the information gathered so far, there aren't many other interesting files I can read at this point. Good options may be development's id_rsa for ssh access, or /etc/shadow for passwords. These options aren't likely to work due to default configurations. True enough, I'm unable to read development's id_rsa file because the web server is likely running as www-data which won't have permission, and I'm unable to read /etc/shadow which by default has even stricter permissions.
 
 <h3>Directory Busting</h3>
 
@@ -105,15 +105,15 @@ I run feroxbuster against the website, using default settings. Nothing too inter
 
 ![image](https://user-images.githubusercontent.com/44827973/144559968-0cd09907-4eff-49cc-9173-84cb032016ab.png)
 
-Running it again with extensions reveals some interesting files.
+Running it again with extensions reveals some interesting files. Note that it's always worth checking .php extensions when you know the web server is running php.
 
 ![image](https://user-images.githubusercontent.com/44827973/144560037-d792b5cc-cfa2-4c4b-812a-7653ca4747ec.png)
 
-Contents of /resources/README.txt:
+Contents of /resources/README.txt reveal there may be an unhashed password somewhere.
 
 ![image](https://user-images.githubusercontent.com/44827973/144560071-63c62fab-3253-4ece-b8c2-d2165e34da8f.png)
 
-I'm unable to view db.php. PHP files are executed by the server and only output the result to the client, we cannot usually read php source code.
+I'm unable to view db.php. PHP files are executed by the server and only output the result to the client, we cannot usually read php source code as the web client.
 
 <h3>Reading db.php via php wrapper</h3>
 
@@ -123,7 +123,7 @@ The Payload:
 
 ```
 <?xml  version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file=db.php"> ]>
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "db.php"> ]>
 		<bugreport>
 		<title>1</title>
 		<cwe>2</cwe>
@@ -162,7 +162,7 @@ If I base64-decode this string, I get credentials.
 
 ![image](https://user-images.githubusercontent.com/44827973/144561898-52d8f3aa-5e6a-42a2-9f99-49d03ade7cc6.png)
 
-Although there isn't an admin user to ssh in with, I test the password with the development user.
+Although there isn't an admin user to ssh in with, I test the password with the development user. Credential reuse is always worth considering, in CTFs and especially in the real world.
 
 ![image](https://user-images.githubusercontent.com/44827973/144561950-9eef6936-9c27-4e87-8438-e15ebfc053dd.png)
 
@@ -240,6 +240,7 @@ The python script is a simple but fun riddle. Going through how it operates:
 
 1. It reads a given file input. If it doesn't have .md extension, the script exits.
 2. It then runs the script-defined function "evaluate", doing the following:
+
 	a. If the first line doesn't start with "# Skytrain Inc", the script exits.
 	b. If the second line doesn't start with "## Ticket to ", the script exits.
 	c. If any of the lines start with "__Ticket Code:__", it sets the variable `code_line` to the current line iteration + 1.
