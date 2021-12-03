@@ -241,14 +241,14 @@ The python script is a simple but fun riddle. Going through how it operates:
 1. It reads a given file input. If it doesn't have .md extension, the script exits.
 2. It then runs the script-defined function "evaluate", doing the following:
 
-	a. If the first line doesn't start with "# Skytrain Inc", the script exits.
-	b. If the second line doesn't start with "## Ticket to ", the script exits.
-	c. If any of the lines start with "__Ticket Code:__", it sets the variable `code_line` to the current line iteration + 1.
-	d. If on any line, code_line is set (not "None") and is equal to the current line iteration `i`, the script enters the dangerous code section.
-	e. The line must start with two asterisks, or the script exits.
-	f. The line has the double asterisks removed, and is split on the "+" character. The first split must equal 4 when the number modulo 7, otherwise script exits. Needless 	    to say, the first split should be an integer.
-	g. The script eval()'s the line with the double asterisks stripped.
-	h. If the return value of eval() of the line is <= 100, the script exits. *This doesn't actually matter, as we've already eval'd what we want to eval.* 
+    a. If the first line doesn't start with "# Skytrain Inc", the script exits.
+    b. If the second line doesn't start with "## Ticket to ", the script exits.
+    c. If any of the lines start with "__Ticket Code:__", it sets the variable `code_line` to the current line iteration + 1.
+    d. If on any line, code_line is set (not "None") and is equal to the current line iteration `i`, the script enters the dangerous code section.
+    e. The line must start with two asterisks, or the script exits.
+    f. The line has the double asterisks removed, and is split on the "+" character. The first split must equal 4 when the number modulo 7, otherwise script exits. Needless 	    to say, the first split should be an integer.
+    g. The script eval()'s the line with the double asterisks stripped.
+    h. If the return value of eval() of the line is <= 100, the script exits. *This doesn't actually matter, as we've already eval'd what we want to eval.* 
 
 I create an .md file to allow script execution until eval() is able to execute, adhering to the aforementioned rules. I've added a command to give /bin/bash setuid permissions.
 
