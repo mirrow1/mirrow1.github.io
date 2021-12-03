@@ -5,8 +5,9 @@ title: HackTheBox BountyHunter Write-up
 
 <h2>Overview</h2>
 
-BountyHunter is an easy-rated Linux machine on HackTheBox. It's running a website with an XML parser, which I can abuse with an XXE attack. In doing so, I'm able to read the contents of a
-database file containing credentials which can be used to ssh in.
+BountyHunter is an easy-rated Linux machine on HackTheBox. It's running a website with an XML parser, which I can abuse with an XXE attack. In doing so, I'm able to read the contents of a database file containing credentials which can be used to ssh in.
+
+<!--more-->
 
 <h2>Initial Enumeration</h2>
 
