@@ -95,6 +95,76 @@ I substitute this data back into the data parameter of the intercepted POST requ
 
 The XXE attack is successful, and I am able to read the contents of /etc/passwd. I find one user account, "development".
 
-With the information gathered so far, there aren't many other interesting files I can read at this point. Good options may be development's id_rsa
+With the information gathered so far, there aren't many other interesting files I can read at this point. Good options may be development's id_rsa for ssh, or /etc/shadow for passwords. I'm unable to read development's id_rsa file because the web server is likely running as www-data which won't have permission, and I'm unable to read /etc/shadow which by default has even stricter permissions.
 
-I'm unable to read development's id_rsa file because the web server is likely running as www-data which won't have permission, and I'm unable to read /etc/shadow which by default has even stricter permissions.
+<h3>Directory Busting</h3>
+
+I run feroxbuster against the website, using default settings. Nothing too interesting is found.
+
+![image](https://user-images.githubusercontent.com/44827973/144559968-0cd09907-4eff-49cc-9173-84cb032016ab.png)
+
+Running it again with extensions reveals some interesting files.
+
+![image](https://user-images.githubusercontent.com/44827973/144560037-d792b5cc-cfa2-4c4b-812a-7653ca4747ec.png)
+
+Contents of /resources/README.txt:
+
+![image](https://user-images.githubusercontent.com/44827973/144560071-63c62fab-3253-4ece-b8c2-d2165e34da8f.png)
+
+I'm unable to view db.php. PHP files are executed by the server and only output the result to the client, we cannot usually read php source code.
+
+<h3>Reading db.php via php wrapper</h3>
+
+I already know I can read system file contents via XXE injections. What happens if I try to read db.php in this way?
+
+The Payload:
+
+```
+<?xml  version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "file=db.php"> ]>
+		<bugreport>
+		<title>1</title>
+		<cwe>2</cwe>
+		<cvss>3</cvss>
+		<reward>&xxe;</reward>
+</bugreport>
+```
+
+Unfortunately, nothing is returned.
+
+![image](https://user-images.githubusercontent.com/44827973/144560863-3027c2a9-7d71-4778-abc8-35487732b140.png)
+
+What if we were to use a PHP wrapper?
+
+I can use a PHP wrapper to try base64-encode the file. According to the PHP manual:
+
+*php://filter is a kind of meta-wrapper designed to permit the application of filters to a stream at the time of opening. This is useful with all-in-one file functions such as readfile(), file(), and file_get_contents() where there is otherwise no opportunity to apply a filter to the stream prior the contents being read.*
+
+I modify the XML input as below. This will hopefully return a base64-encoded string containing the contents of db.php.
+
+```
+<?xml  version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE foo [ <!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=db.php"> ]>
+		<bugreport>
+		<title>1</title>
+		<cwe>2</cwe>
+		<cvss>3</cvss>
+		<reward>&xxe;</reward>
+</bugreport>
+```
+This time I'm successful in receiving what should be a base64 string.
+
+![image](https://user-images.githubusercontent.com/44827973/144561794-fad0ebbe-b67b-4afd-824c-bc98157f72f2.png)
+
+If I base64-decode this string, I get credentials.
+
+![image](https://user-images.githubusercontent.com/44827973/144561898-52d8f3aa-5e6a-42a2-9f99-49d03ade7cc6.png)
+
+Although there isn't an admin user to ssh in with, I test the password with the development user.
+
+![image](https://user-images.githubusercontent.com/44827973/144561950-9eef6936-9c27-4e87-8438-e15ebfc053dd.png)
+
+It works! I'm able to read the user.txt file.
+
+![image](https://user-images.githubusercontent.com/44827973/144561982-b75380fe-ee36-46b3-870c-a0f538393e40.png)
+
