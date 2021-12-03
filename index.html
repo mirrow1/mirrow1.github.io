@@ -12,6 +12,9 @@ layout: default
         {{ post.excerpt }}
       </div>
 
+      {% if post.excerpt %}
+        {{ post.excerpt }}
+      {% endif %}
       <a href="{{ site.baseurl }}{{ post.url }}" class="read-more">Read More</a>
     </article>
   {% endfor %}
