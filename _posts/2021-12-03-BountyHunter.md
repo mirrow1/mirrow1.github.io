@@ -53,7 +53,7 @@ I put in some test values and when submitted, the page returns the same values. 
 
 # INSERT BASIC TESTING SCREENSHOT HERE#
 
-<h3>Revealing sensitive data via XXE attacks</h3>
+<h3>XXE attacks</h3>
 
 I want to see if there's interesting in the POST request that can be abused. I fire up Burp Suite and intercept some test values:
 
@@ -93,3 +93,8 @@ I substitute this data back into the data parameter of the intercepted POST requ
 
 ![image](https://user-images.githubusercontent.com/44827973/144491846-5d8aa284-8e38-408b-aece-0e4dbafe0e6a.png)
 
+The XXE attack is successful, and I am able to read the contents of /etc/passwd. I find one user account, "development".
+
+With the information gathered so far, there aren't many other interesting files I can read at this point. Good options may be development's id_rsa
+
+I'm unable to read development's id_rsa file because the web server is likely running as www-data which won't have permission, and I'm unable to read /etc/shadow which by default has even stricter permissions.
