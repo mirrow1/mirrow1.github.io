@@ -250,7 +250,7 @@ The python script is a simple but fun riddle. Going through how it operates:
     g. The script eval()'s the line with the double asterisks stripped.
     h. If the return value of eval() of the line is <= 100, the script exits. *This doesn't actually matter, as we've already eval'd what we want to eval.* 
 
-I create an .md file to allow script execution until eval() is able to execute, adhering to the aforementioned rules. I've added a command to give /bin/bash setuid permissions.
+I create an .md file adhering to the aforementioned rules. I've added a command to give /bin/bash setuid permissions.
 
 ```
 development@bountyhunter:~$ cat hi.md
@@ -260,6 +260,6 @@ __Ticket Code:__
 **704+__import__('os').system('chmod u+s /bin/bash')
 ```
 
-I run the sudo command, specifying my .md file. I'm able to run /bin/bash and become root, and can read the contents of root.txt.
+I run the sudo command, specifying my .md file. I'm able to run /bin/bash and become effective root, and can read the contents of root.txt.
 
 ![image](https://user-images.githubusercontent.com/44827973/144566990-f66afe93-1cd0-4346-8f4d-0180ffc61635.png)
