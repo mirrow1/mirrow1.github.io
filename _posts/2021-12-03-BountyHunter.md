@@ -134,6 +134,7 @@ The Payload:
 ```
 
 Unfortunately, nothing is returned.
+Edit: the end of IppSec's BountyHunter walkthrough reveals the reason to be the "<" character which appears to break the XML parsing.
 
 ![image](https://user-images.githubusercontent.com/44827973/144560863-3027c2a9-7d71-4778-abc8-35487732b140.png)
 
